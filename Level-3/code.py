@@ -5,11 +5,7 @@ base_path = Path(__file__).parent.resolve()
 assets_path = (base_path / 'assets').resolve()
 
 def asset_path(path):
-    # Kludge so CodeQL doesnt report false positive "Uncontrolled data used in path expression"
-    # Alas CodeQL doesnt support the usual "noqa" comment (https://github.com/github/codeql/issues/11427)
-    path = str(path)
-    
-    result = (base_path / path).resolve()
+    result = Path(base_path, path).resolve()
     if result.is_relative_to(assets_path) and result.is_file():
         return result
     return None
