@@ -1,5 +1,14 @@
-import os
 from flask import Flask, request  
+from pathlib import Path
+
+base_path = Path(__file__).parent.resolve()
+assets_path = (base_path / 'assets').resolve()
+
+def asset_path(path):
+    result = (base_path / path).resolve()
+    if result.is_relative_to(assets_path) and result.is_file():
+        return result
+    return None
 
 ### Unrelated to the exercise -- Starts here -- Please ignore
 app = Flask(__name__)
@@ -22,20 +31,15 @@ class TaxPayer:
         # setting a profile picture is optional
         if not path:
             pass
-        
-        # defends against path traversal attacks
-        if path.startswith('/') or path.startswith('..'):
+
+        safe_path = asset_path(path)
+        if not safe_path:
             return None
-        
-        # builds path
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        prof_picture_path = os.path.normpath(os.path.join(base_dir, path))
-    
-        with open(prof_picture_path, 'rb') as pic:
-            picture = bytearray(pic.read())
+
+        picture = safe_path.read_bytes()
 
         # assume that image is returned on screen after this
-        return prof_picture_path
+        return str(safe_path)
 
     # returns the path of an attached tax form that every user should submit
     def get_tax_form_attachment(self, path=None):
@@ -44,8 +48,11 @@ class TaxPayer:
         if not path:
             raise Exception("Error: Tax form is required for all users")
        
-        with open(path, 'rb') as form:
-            tax_data = bytearray(form.read())
+        safe_path = asset_path(path)
+        if not safe_path:
+            return None
+
+        tax_data = safe_path.read_bytes()
 
         # assume that taxa data is returned on screen after this
-        return path
+        return str(safe_path)
